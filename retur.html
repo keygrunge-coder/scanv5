@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCANNER RETUR SUPER ENGINE</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #f4f4f4; text-align: center; }
+        h2 { color: #cc0000; margin-bottom: 5px; }
+        
+        /* INDIKATOR BULAT GEDE ALA m-BCA */
+        #bca-indicator {
+            width: 80px; height: 80px; border-radius: 50%; background-color: #ff3333; /* Default Merah sebelum siap */
+            margin: 15px auto; box-shadow: 0 0 15px rgba(0,0,0,0.2); transition: background-color 0.3s ease;
+        }
+        
+        #reader { width: 100%; max-width: 450px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; }
+        #status-message { font-size: 18px; font-weight: bold; margin: 15px 0; color: #333; }
+        
+        /* TOMBOL DOWNLOAD OFFLINE NYELIP DI BAWAH */
+        .btn-offline {
+            background-color: #555; color: white; border: none; padding: 10px 20px;
+            font-size: 14px; border-radius: 5px; cursor: pointer; margin-top: 20px; display: inline-block;
+        }
+        #offline-count { font-size: 14px; color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <h2>🔄 SCANNER BARANG RETUR</h2>
+    <p style="margin: 0 0 10px 0; color: #666;">Khusus scan barang returan masuk rumah</p>
+
+    <div id="bca-indicator"></div>
+    <div id="status-message">Menyalakan Kamera...</div>
+
+    <div id="reader"></div>
+
+    <br>
+    <button class="btn-offline" onclick="downloadOfflineData()">📥 Download Data Offline</button>
+    <div id="offline-count">Data Tersimpan di HP: <span id="local-slot">0</span> resi</div>
+
+    <script>
+        // GANTI PAKE LINK WEB APP GOOGLE SCRIPT LU YANG BARU, BRO!
+        const WEB_APP_URL = "PASANG_LINK_WEB_APP_LU_DISINI"; 
+        
+        let localData = JSON.parse(localStorage.getItem('retur_offline_cache')) || [];
+        document.getElementById('local-slot').innerText = localData.length;
+
+        // Fungsi Suara Robot Google (Text-to-Speech)
+        function robotBicara(teks) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Potong suara lama biar cepat respon
+                let tts = new SpeechSynthesisUtterance(teks);
+                tts.lang = 'id-ID'; // Bahasa Indonesia biar fasih
+                tts.rate = 1.2;     // Kecepatan ngomong biar kenceng pas packing
+                window.speechSynthesis.speak(tts);
+            }
+        }
+
+        // Fungsi Ganti Lampu m-BCA
+        function setLampuBca(warna, pesan) {
+            const indikator = document.getElementById('bca-indicator');
+            const teksPesan = document.getElementById('status-message');
+            teksPesan.innerText = pesan;
+            
+            if(warna === 'ijo') indikator.style.backgroundColor = '#00cc44';
+            if(warna === 'kuning') indikator.style.backgroundColor = '#ffcc00';
+            if(warna === 'merah') indikator.style.backgroundColor = '#ff3333';
+        }
+
+        // Jalankan Scanner Kamera HP
+        function startScanner() {
+            const html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, // Pakai kamera belakang HP
+                { fps: 10, qrbox: { width: 250, height: 150 } }, // Set kotak fokus barcode panjang resi
+                (decodedText) => {
+                    // Jeda sejenak setelah scan sukses biar data gak tumpang tindih
+                    html5QrcodeScanner.pause(true);
+                    prosesResiRetur(decodedText, html5QrcodeScanner);
+                },
+                (errorMessage) => { /* Abaikan log error scan nyari nyala */ }
+            ).then(() => {
+                setLampuBca('ijo', 'Siap Scan Returan, Bro!');
+                robotBicara("Sistem Retur Siap");
+            }).catch(err => {
+                setLampuBca('merah', 'Kamera Gagal Dibuka');
+            });
+        }
+
+        function prosesResiRetur(resiStr, scanner) {
+            let resiClean = resiStr.trim();
+            let resiUpper = resiClean.toUpperCase();
+            let ekspedisi = "Aneh";
+
+            // Deteksi ekspedisi buat dibacain suaranya
+            if(resiUpper.indexOf("JX") === 0 || resiUpper.indexOf("JZ") === 0) ekspedisi = "J and T";
+            if(resiUpper.indexOf("SPX") === 0 || resiUpper.indexOf("SPXID") === 0) ekspedisi = "S P X";
+
+            // Simpan ke Memori HP dulu (LocalStorage) buat backup pengaman sinyal
+            if (!localData.includes(resiClean)) {
+                localData.push(resiClean);
+                localStorage.setItem('retur_offline_cache', JSON.stringify(localData));
+                document.getElementById('local-slot').innerText = localData.length;
+            }
+
+            // Tembak data ke Google Sheets
+            setLampuBca('kuning', 'Sedang Mengirim ke Sheets...');
+            
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify({ resi: resiClean, source: "retur" })
+            })
+            .then(res => res.json())
+            .then(response => {
+                if(response.status === 'success') {
+                    setLampuBca('ijo', `Sukses! Retur ${ekspedisi} Masuk`);
+                    robotBicara(`Retur, ${ekspedisi}, Masuk.`);
+                } else if(response.status === 'duplicate') {
+                    setLampuBca('merah', 'Resi Dobel/Sudah Pernah Di-scan');
+                    robotBicara("Retur Dobel!");
+                } else if(response.status === 'invalid') {
+                    setLampuBca('merah', 'Resi Aneh Ditolak!');
+                    robotBicara("Resi Aneh Gagal");
+                } else {
+                    setLampuBca('merah', 'Sistem Eror');
+                    robotBicara("Gagal");
+                }
+                
+                // Nyalakan kamera lagi setelah jeda 1.2 detik
+                setTimeout(() => { scanner.resume(); }, 1200);
+            })
+            .catch(err => {
+                // Sinyal Bapuk / Mati Lampu Caringin
+                setLampuBca('kuning', 'Sinyal Hilang! Tersimpan di HP (Antre)');
+                robotBicara(`Retur, ${ekspedisi}, Antre.`);
+                
+                setTimeout(() => { scanner.resume(); }, 1200);
+            });
+        }
+
+        // Fitur klik download file cadangan teks teks jika internet tewas total
+        function downloadOfflineData() {
+            if(localData.length === 0) {
+                alert("Belum ada data resi yang lu scan, bro!");
+                return;
+            }
+            let txtContent = localData.join("\n");
+            let blob = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `backup_retur_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+        }
+
+        window.onload = startScanner;
+    </script>
+</body>
+</html>
