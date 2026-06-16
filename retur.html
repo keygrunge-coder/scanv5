@@ -40,6 +40,10 @@
     </div>
 
     <script>
+      window.onload = function() {
+    startCamera(); // Atau startScanner() sesuai nama fungsi lu
+    muatDataDashboardAwal(); // INI PENTING BUAT NARIK DATA DASBOR
+};
         const APP_URL = "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
         let html5QrCode = null;
         let scanHistory = JSON.parse(localStorage.getItem("returHistory") || "[]");
