@@ -126,7 +126,10 @@
 <script>
 // ⚠️ TINGGAL PASTE LINK WEB APP APPS SCRIPT LU YANG BARU DI SINI, BRO!
 const APP_URL = "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
-
+window.onload = function() {
+    startCamera(); // Atau startScanner() sesuai nama fungsi lu
+    muatDataDashboardAwal(); // INI PENTING BUAT NARIK DATA DASBOR
+};
 let html5QrCode = null;
 let isProcessing = false;
 
