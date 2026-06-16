@@ -3,146 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCANNER RETUR SUPER ENGINE V5</title>
+    <title>SCANNER RETUR - SUPER ENGINE</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #f4f4f4; text-align: center; }
-        h2 { color: #cc0000; margin-bottom: 5px; }
-        
-        #bca-indicator {
-            width: 80px; height: 80px; border-radius: 50%; background-color: #ff3333;
-            margin: 15px auto; box-shadow: 0 0 15px rgba(0,0,0,0.2); transition: background-color 0.3s ease;
-        }
-        
-        #reader { width: 100%; max-width: 450px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; }
-        #status-message { font-size: 18px; font-weight: bold; margin: 15px 0; color: #333; }
-        
-        .btn-offline {
-            background-color: #555; color: white; border: none; padding: 10px 20px;
-            font-size: 14px; border-radius: 5px; cursor: pointer; margin-top: 20px; display: inline-block;
-        }
-        #offline-count { font-size: 14px; color: #666; margin-top: 5px; }
+        :root { --primary: #cc0000; --bg-body: #f8fafc; }
+        body { background: var(--bg-body); padding: 10px; color: #334155; max-width: 500px; margin: 0 auto; font-family: Arial, sans-serif; }
+        .header-box { background: var(--primary); color: white; padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 10px; }
+        .card { background: white; border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        #bca-indicator { width: 70px; height: 70px; border-radius: 50%; background-color: #ff3333; margin: 10px auto; transition: background 0.3s; }
+        #status-message { font-weight: bold; text-align: center; margin-bottom: 10px; }
+        #reader { width: 100%; border-radius: 10px; overflow: hidden; background: black; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; font-size: 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        .badge { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; background: var(--primary); color: white; }
     </style>
 </head>
 <body>
 
-    <h2>🔄 SCANNER BARANG RETUR</h2>
-    <p style="margin: 0 0 10px 0; color: #666;">Khusus scan barang returan masuk rumah</p>
-
+    <div class="header-box"><h3>🔄 SCANNER BARANG RETUR</h3></div>
+    
     <div id="bca-indicator"></div>
-    <div id="status-message">Menyalakan Kamera...</div>
+    <div id="status-message">Siap Scan Returan...</div>
 
-    <div id="reader"></div>
+    <div class="card">
+        <div id="reader"></div>
+        <button id="startBtn" class="btn" style="margin-top:10px">Aktifkan Kamera</button>
+    </div>
 
-    <br>
-    <button class="btn-offline" onclick="downloadOfflineData()">📥 Download Data Offline</button>
-    <div id="offline-count">Data Tersimpan di HP: <span id="local-slot">0</span> resi</div>
+    <div class="card">
+        <h3>Riwayat Retur</h3>
+        <table>
+            <thead><tr><th>Resi</th><th>Status</th></tr></thead>
+            <tbody id="historyBody"></tbody>
+        </table>
+    </div>
 
     <script>
-        // 🚨 LINK URL EXEC LU UDAH GW PASANG DI SINI, BRO!
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec"; 
-        
-        let localData = JSON.parse(localStorage.getItem('retur_offline_cache')) || [];
-        document.getElementById('local-slot').innerText = localData.length;
+        const APP_URL = "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
+        let html5QrCode = null;
+        let scanHistory = JSON.parse(localStorage.getItem("returHistory") || "[]");
+        renderHistory();
 
-        function robotBicara(teks) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                let tts = new SpeechSynthesisUtterance(teks);
-                tts.lang = 'id-ID';
-                tts.rate = 1.2;     
-                window.speechSynthesis.speak(tts);
-            }
+        function setLampu(warna, pesan) {
+            document.getElementById('bca-indicator').style.backgroundColor = warna === 'ijo' ? '#00cc44' : (warna === 'kuning' ? '#ffcc00' : '#ff3333');
+            document.getElementById('status-message').innerText = pesan;
         }
 
-        function setLampuBca(warna, pesan) {
-            const indikator = document.getElementById('bca-indicator');
-            const teksPesan = document.getElementById('status-message');
-            teksPesan.innerText = pesan;
-            
-            if(warna === 'ijo') indikator.style.backgroundColor = '#00cc44';
-            if(warna === 'kuning') indikator.style.backgroundColor = '#ffcc00';
-            if(warna === 'merah') indikator.style.backgroundColor = '#ff3333';
-        }
-
-        function startScanner() {
-            const html5QrcodeScanner = new Html5Qrcode("reader");
-            html5QrcodeScanner.start(
-                { facingMode: "environment" }, 
-                { fps: 20, qrbox: { width: 250, height: 150 } }, 
-                (decodedText) => {
-                    html5QrcodeScanner.pause(true);
-                    prosesResiRetur(decodedText, html5QrcodeScanner);
-                },
-                (errorMessage) => {}
-            ).then(() => {
-                setLampuBca('ijo', 'Siap Scan Returan, Bro!');
-                robotBicara("Sistem Retur Siap");
-            }).catch(err => {
-                setLampuBca('merah', 'Kamera Gagal Dibuka');
+        function startCamera() {
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (decodedText) => {
+                html5QrCode.pause(true);
+                prosesScan(decodedText.trim());
             });
         }
+        document.getElementById("startBtn").onclick = startCamera;
 
-        function prosesResiRetur(resiStr, scanner) {
-            let resiClean = resiStr.trim();
-            let resiUpper = resiClean.toUpperCase();
-            let ekspedisi = "Aneh";
-
-            if(resiUpper.indexOf("JX") === 0 || resiUpper.indexOf("JZ") === 0) ekspedisi = "J and T";
-            if(resiUpper.indexOf("SPX") === 0 || resiUpper.indexOf("SPXID") === 0) ekspedisi = "S P X";
-
-            if (!localData.includes(resiClean)) {
-                localData.push(resiClean);
-                localStorage.setItem('retur_offline_cache', JSON.stringify(localData));
-                document.getElementById('local-slot').innerText = localData.length;
-            }
-
-            setLampuBca('kuning', 'Sedang Mengirim ke Sheets...');
-            
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                mode: "cors",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ resi: resiClean, source: "retur" })
-            })
-            .then(res => res.json())
-            .then(response => {
-                if(response.status === 'success') {
-                    setLampuBca('ijo', `Sukses! Retur ${ekspedisi} Masuk`);
-                    robotBicara(`Retur, ${ekspedisi}, Masuk.`);
-                } else if(response.status === 'duplicate') {
-                    setLampuBca('merah', 'Resi Dobel/Sudah Masuk');
-                    robotBicara("Retur Dobel!");
-                } else if(response.status === 'invalid') {
-                    setLampuBca('merah', 'Resi Aneh Ditolak!');
-                    robotBicara("Resi Aneh Gagal");
+        async function prosesScan(resi) {
+            setLampu('kuning', 'Mengirim...');
+            try {
+                const r = await fetch(APP_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ resi: resi, source: "retur" })
+                });
+                const json = await r.json();
+                
+                if(json.status === "success") {
+                    setLampu('ijo', "Sukses!");
+                    scanHistory.unshift({ resi, status: "RETUR" });
                 } else {
-                    setLampuBca('merah', 'Sistem Eror');
-                    robotBicara("Gagal");
+                    setLampu('merah', "Gagal/Dobel");
+                    scanHistory.unshift({ resi, status: "GAGAL" });
                 }
-                setTimeout(() => { scanner.resume(); }, 1200);
-            })
-            .catch(err => {
-                setLampuBca('kuning', 'Sinyal Hilang! Masuk Antrean HP');
-                robotBicara(`Retur, ${ekspedisi}, Antre.`);
-                setTimeout(() => { scanner.resume(); }, 1200);
-            });
+                localStorage.setItem("returHistory", JSON.stringify(scanHistory.slice(0, 15)));
+                renderHistory();
+            } catch(e) { setLampu('merah', "Error Sinyal"); }
+            setTimeout(() => { html5QrCode.resume(); }, 1500);
         }
 
-        function downloadOfflineData() {
-            if(localData.length === 0) {
-                alert("Belum ada data resi yang lu scan, bro!");
-                return;
-            }
-            let txtContent = localData.join("\n");
-            let blob = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
-            let a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = `backup_retur_${new Date().toISOString().slice(0,10)}.txt`;
-            a.click();
+        function renderHistory() {
+            const body = document.getElementById("historyBody");
+            body.innerHTML = scanHistory.map(item => `
+                <tr><td>${item.resi}</td><td><span class="badge">${item.status}</span></td></tr>
+            `).join("");
         }
-
-        window.onload = startScanner;
     </script>
 </body>
 </html>
