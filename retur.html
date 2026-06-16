@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCANNER RETUR - SUPER ENGINE</title>
+    <title>SCANNER RETUR </title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --primary: #cc0000; --bg-body: #f8fafc; }
@@ -24,7 +24,7 @@
     <div class="header-box"><h3>🔄 SCANNER BARANG RETUR</h3></div>
     
     <div id="bca-indicator"></div>
-    <div id="status-message">Siap Scan Returan...</div>
+    <div id="status-message">Menyalakan Kamera...</div>
 
     <div class="card">
         <div id="reader"></div>
@@ -45,6 +45,16 @@
         let scanHistory = JSON.parse(localStorage.getItem("returHistory") || "[]");
         renderHistory();
 
+        function robotBicara(teks) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let tts = new SpeechSynthesisUtterance(teks);
+                tts.lang = 'id-ID';
+                tts.rate = 1.2;
+                window.speechSynthesis.speak(tts);
+            }
+        }
+
         function setLampu(warna, pesan) {
             document.getElementById('bca-indicator').style.backgroundColor = warna === 'ijo' ? '#00cc44' : (warna === 'kuning' ? '#ffcc00' : '#ff3333');
             document.getElementById('status-message').innerText = pesan;
@@ -55,6 +65,9 @@
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (decodedText) => {
                 html5QrCode.pause(true);
                 prosesScan(decodedText.trim());
+            }).then(() => {
+                setLampu('ijo', 'Siap Scan Returan!');
+                robotBicara("Sistem Retur Siap");
             });
         }
         document.getElementById("startBtn").onclick = startCamera;
@@ -69,15 +82,24 @@
                 const json = await r.json();
                 
                 if(json.status === "success") {
-                    setLampu('ijo', "Sukses!");
+                    setLampu('ijo', "Sukses! Retur Masuk");
+                    robotBicara("Retur Sukses Masuk");
                     scanHistory.unshift({ resi, status: "RETUR" });
+                } else if(json.status === "duplicate") {
+                    setLampu('merah', "Resi Dobel!");
+                    robotBicara("Retur Dobel, Bro!");
+                    scanHistory.unshift({ resi, status: "DOBEL" });
                 } else {
-                    setLampu('merah', "Gagal/Dobel");
+                    setLampu('merah', "Gagal");
+                    robotBicara("Resi Gagal");
                     scanHistory.unshift({ resi, status: "GAGAL" });
                 }
                 localStorage.setItem("returHistory", JSON.stringify(scanHistory.slice(0, 15)));
                 renderHistory();
-            } catch(e) { setLampu('merah', "Error Sinyal"); }
+            } catch(e) { 
+                setLampu('merah', "Error Sinyal");
+                robotBicara("Gagal Koneksi");
+            }
             setTimeout(() => { html5QrCode.resume(); }, 1500);
         }
 
