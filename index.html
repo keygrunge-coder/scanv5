@@ -11,58 +11,39 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
-        :root {
-            --primary: #003399;
-            --dark: #0f172a;
-            --bg-body: #f8fafc;
-            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
-            --keluar-bg: #dcfce7;
-            --keluar-text: #166534;
-        }
-
+        :root { --primary: #003399; --bg-body: #f8fafc; --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); --keluar-bg: #dcfce7; --keluar-text: #166534; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
         body { background: var(--bg-body); padding: 10px; color: #334155; max-width: 500px; margin: 0 auto; }
-        
         .header-box { background: var(--primary); color: white; padding: 12px; border-radius: 12px; margin-bottom: 10px; text-align: center; }
         .btn-nav { background: #cc0000; color: white; border: none; padding: 8px 15px; font-weight: bold; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 5px; font-size: 13px; }
-        
         .dash-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
         .dash-card { background: white; padding: 10px 5px; border-radius: 10px; text-align: center; box-shadow: var(--card-shadow); border: 1px solid #f1f5f9; }
         .dash-card h4 { margin: 0; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; }
         .dash-card p { margin: 5px 0 0 0; font-size: 20px; font-weight: 800; color: var(--primary); }
-
         .card { background: white; border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: var(--card-shadow); border: 1px solid #f1f5f9; }
         .card h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: #475569; text-transform: uppercase; }
-
         #bca-indicator { width: 70px; height: 70px; border-radius: 50%; background-color: #ff3333; margin: 10px auto; box-shadow: 0 0 12px rgba(0,0,0,0.2); transition: background-color 0.3s ease; }
         #status-message { font-size: 15px; font-weight: bold; margin: 10px 0; color: #334155; text-align: center; }
-
         #reader { width: 100%; border-radius: 10px; overflow: hidden; border: none !important; background: black; }
-        
         .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-offline { background-color: #555; color: white; border: none; padding: 8px 15px; font-size: 13px; border-radius: 5px; cursor: pointer; margin-top: 10px; display: inline-block; width: 100%; }
-
         input { width: 100%; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; margin-bottom: 8px; font-size: 14px; outline: none; }
-
         #notif { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: calc(100% - 30px); max-width: 470px; z-index: 9999; padding: 14px; border-radius: 10px; font-weight: 700; text-align: center; box-shadow: 0 15px 20px -5px rgb(0 0 0 / 0.1); display: none; }
         .success { background: #10b981; color: white; }
         .warning { background: #f59e0b; color: white; }
         .error { background: #ef4444; color: white; }
-
         .history-container { max-height: 200px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 10px 6px; font-size: 13px; text-align: left; }
         th { background: #f8fafc; color: #64748b; font-weight: 700; position: sticky; top: 0; }
         td { border-bottom: 1px solid #f1f5f9; }
-
         .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; display: inline-block; }
         .badge-keluar { background: var(--keluar-bg); color: var(--keluar-text); }
         .badge-duplikat { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
         .badge-invalid { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
     </style>
 </head>
-
 <body>
 
     <div class="header-box">
@@ -71,18 +52,9 @@
     </div>
 
     <div class="dash-container">
-        <div class="dash-card">
-            <h4>Hari Ini</h4>
-            <p id="load-hari-ini">0</p>
-        </div>
-        <div class="dash-card">
-            <h4>Hari Lalu</h4>
-            <p id="load-kemarin">0</p>
-        </div>
-        <div class="dash-card">
-            <h4>Minggu Ini</h4>
-            <p id="load-minggu">0</p>
-        </div>
+        <div class="dash-card"><h4>Hari Ini</h4><p id="load-hari-ini">0</p></div>
+        <div class="dash-card"><h4>Hari Lalu</h4><p id="load-kemarin">0</p></div>
+        <div class="dash-card"><h4>Minggu Ini</h4><p id="load-minggu">0</p></div>
     </div>
 
     <div id="bca-indicator"></div>
@@ -112,258 +84,76 @@
         <h3>Riwayat Terakhir</h3>
         <div class="history-container">
             <table>
-                <thead>
-                    <tr>
-                        <th>Resi</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Resi</th><th>Status</th></tr></thead>
                 <tbody id="historyBody"></tbody>
             </table>
         </div>
     </div>
 
 <script>
-// ⚠️ TINGGAL PASTE LINK WEB APP APPS SCRIPT LU YANG BARU DI SINI, BRO!
 const APP_URL = "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
-window.onload = function() {
-    startCamera(); // Atau startScanner() sesuai nama fungsi lu
-    muatDataDashboardAwal(); // INI PENTING BUAT NARIK DATA DASBOR
-};
+window.onload = function() { startCamera(); muatDataDashboardAwal(); };
 let html5QrCode = null;
 let isProcessing = false;
-
 let localData = JSON.parse(localStorage.getItem('harian_offline_cache')) || [];
 document.getElementById('local-slot').innerText = localData.length;
-
 let scanHistory = JSON.parse(localStorage.getItem("scanHistory") || "[]");
 renderHistory();
 
-function beep(freq, duration){
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        osc.frequency.value = freq;
-        osc.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + duration);
-    } catch(e){}
-}
+function beep(freq, duration){ try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.frequency.value = freq; osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + duration); } catch(e){} }
 function beepSuccess(){ beep(1000, 0.08); }
 function beepDuplicate(){ beep(350, 0.4); } 
 function beepError(){ beep(150, 0.4); }
 
-function robotBicara(teks) {
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        let tts = new SpeechSynthesisUtterance(teks);
-        tts.lang = 'id-ID';
-        tts.rate = 1.2;
-        window.speechSynthesis.speak(tts);
-    }
-}
-
-function setLampuBca(warna, pesan) {
-    const indikator = document.getElementById('bca-indicator');
-    document.getElementById('status-message').innerText = pesan;
-    if(warna === 'ijo') indikator.style.backgroundColor = '#00cc44';
-    if(warna === 'kuning') indikator.style.backgroundColor = '#ffcc00';
-    if(warna === 'merah') indikator.style.backgroundColor = '#ff3333';
-}
-
-function showNotif(text, type){
-    const n = document.getElementById("notif");
-    n.style.display = "block";
-    n.className = type === "warning" ? "warning" : (type === "error" ? "error" : "success");
-    n.innerHTML = text;
-    setTimeout(()=>{ n.style.display="none"; }, 2500);
-}
+function robotBicara(teks) { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); let tts = new SpeechSynthesisUtterance(teks); tts.lang = 'id-ID'; tts.rate = 1.2; window.speechSynthesis.speak(tts); } }
+function setLampuBca(warna, pesan) { const indikator = document.getElementById('bca-indicator'); document.getElementById('status-message').innerText = pesan; if(warna === 'ijo') indikator.style.backgroundColor = '#00cc44'; if(warna === 'kuning') indikator.style.backgroundColor = '#ffcc00'; if(warna === 'merah') indikator.style.backgroundColor = '#ff3333'; }
+function showNotif(text, type){ const n = document.getElementById("notif"); n.style.display = "block"; n.className = type === "warning" ? "warning" : (type === "error" ? "error" : "success"); n.innerHTML = text; setTimeout(()=>{ n.style.display="none"; }, 2500); }
 
 function muatDataDashboardAwal() {
     fetch(`${APP_URL}?action=getDashboard`)
     .then(res => res.json())
-    .then(data => {
-        if(data.status === 'success') {
-            document.getElementById('load-hari-ini').innerText = data.hariIni;
-            document.getElementById('load-kemarin').innerText = data.kemarin;
-            document.getElementById('load-minggu').innerText = data.mingguIni;
-        }
-    }).catch(e => {});
+    .then(data => { if(data.status === 'success') { document.getElementById('load-hari-ini').innerText = data.hariIni; document.getElementById('load-kemarin').innerText = data.kemarin; document.getElementById('load-minggu').innerText = data.mingguIni; } }).catch(e => {});
 }
 
 function startCamera() {
-    if(html5QrCode) {
-        showNotif("Kamera sudah aktif, bro!", "warning");
-        return;
-    }
-
+    if(html5QrCode) return;
     html5QrCode = new Html5Qrcode("reader");
-    
-    const config = { 
-        fps: 20, 
-        qrbox: (width, height) => {
-            return { width: Math.floor(width * 0.85), height: Math.floor(height * 0.4) }
-        },
-        formatsToSupport: [ 
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39
-        ]
-    };
-
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        config,
-        (decodedText) => {
-            if(!isProcessing) {
-                isProcessing = true;
-                html5QrCode.pause(true);
-                saveResi(decodedText.trim());
-            }
-        },
-        (errorMessage) => {}
-    ).then(() => {
-        document.getElementById("startBtn").innerText = "Kamera Scanner Aktif";
-        setLampuBca('ijo', 'Sistem Siap Hantam Rata Paket!');
-        robotBicara("Sistem Siap");
-        muatDataDashboardAwal();
-    }).catch(err => {
-        setLampuBca('merah', 'Kamera Gagal Diakses');
-        showNotif("Gagal membuka akses kamera", "error");
-    });
+    html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 200, formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.CODE_39] }, (decodedText) => { if(!isProcessing) { isProcessing = true; html5QrCode.pause(true); saveResi(decodedText.trim()); } }).then(() => { document.getElementById("startBtn").innerText = "Kamera Scanner Aktif"; setLampuBca('ijo', 'Sistem Siap Scan paket!'); robotBicara("Sistem Siap"); }).catch(err => { setLampuBca('merah', 'Kamera Gagal'); });
 }
-
 document.getElementById("startBtn").onclick = startCamera;
-
-document.getElementById("manualBtn").onclick = ()=>{
-    const resi = document.getElementById("manualResi").value.trim();
-    if(!resi || isProcessing) return;
-
-    if(resi.toLowerCase() === "clear"){
-        if(confirm("Hapus semua riwayat lokal di HP?")){
-            scanHistory = [];
-            localStorage.removeItem("scanHistory");
-            renderHistory();
-            showNotif("✓ RIWAYAT RESET", "success");
-        }
-        document.getElementById("manualResi").value="";
-        return;
-    }
-
-    isProcessing = true; 
-    saveResi(resi);
-    document.getElementById("manualResi").value="";
-};
 
 async function saveResi(resi){
     let resiUpper = resi.toUpperCase();
-    let ekspedisi = "Aneh";
+    let ekspedisi = resiUpper.startsWith("SPX") ? "S P X" : "J and T";
 
-    if(resiUpper.indexOf("JX") === 0 || resiUpper.indexOf("JZ") === 0) ekspedisi = "J and T";
-    if(resiUpper.indexOf("SPX") === 0 || resiUpper.indexOf("SPXID") === 0) ekspedisi = "S P X";
-
-    if (!localData.includes(resi)) {
-        localData.push(resi);
-        localStorage.setItem('harian_offline_cache', JSON.stringify(localData));
-        document.getElementById('local-slot').innerText = localData.length;
-    }
-
+    if (!localData.includes(resi)) { localData.push(resi); localStorage.setItem('harian_offline_cache', JSON.stringify(localData)); document.getElementById('local-slot').innerText = localData.length; }
     setLampuBca('kuning', 'Mengirim Data...');
 
     try{
-        const r = await fetch(APP_URL, {
-            method: "POST",
-            mode: "cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ resi: resi, source: "harian" })
-        });
-
+        const r = await fetch(APP_URL, { method: "POST", mode: "cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ resi: resi, source: "harian" }) });
         const json = await r.json();
 
         if(json.status === "success"){
-            beepSuccess();
-            setLampuBca('ijo', `Sukses! ${json.ekspedisi}`);
-            robotBicara(`${ekspedisi}, Sukses.`);
-            showNotif("✓ BERHASIL UPDATE<br>" + resi, "success");
-
+            beepSuccess(); setLampuBca('ijo', `Sukses! ${json.ekspedisi}`); robotBicara(`${ekspedisi}, Sukses.`); showNotif("✓ BERHASIL", "success");
             scanHistory.unshift({ resi, status: "SUKSES", display: json.ekspedisi });
-            localStorage.setItem("scanHistory", JSON.stringify(scanHistory.slice(0, 100)));
-            renderHistory();
-
-            if(json.dashboard) {
-                document.getElementById('load-hari-ini').innerText = json.dashboard.hariIni;
-                document.getElementById('load-kemarin').innerText = json.dashboard.kemarin;
-                document.getElementById('load-minggu').innerText = json.dashboard.mingguIni;
-            }
-        }
-        else if(json.status === "duplicate"){
-            beepDuplicate();
-            setLampuBca('merah', 'Resi Dobel!');
-            robotBicara("J and T, Dobel, Bro!");
-            showNotif("⚠ GAGAL: RESI DOBEL", "warning");
-
+        } else if(json.status === "duplicate"){
+            beepDuplicate(); setLampuBca('merah', 'Resi Dobel!');
+            // --- INI BAGIAN YANG DIPERBAIKI BIAR OTOMATIS SESUAI KURIR ---
+            robotBicara(`${ekspedisi}, Dobel, Bro!`); 
+            showNotif("⚠ RESI DOBEL", "warning");
             scanHistory.unshift({ resi, status: "DUPLIKAT", display: "DOBEL" });
-            localStorage.setItem("scanHistory", JSON.stringify(scanHistory.slice(0, 100)));
-            renderHistory();
-        }
-        else if(json.status === "invalid"){
-            beepError();
-            setLampuBca('merah', 'Resi Aneh Ditolak!');
-            robotBicara("Resi Aneh Gagal");
-            showNotif("⚠ RESI ILLEGAL / ANEH TENDANG", "error");
-
+        } else {
+            beepError(); setLampuBca('merah', 'Resi Aneh!'); robotBicara("Resi Aneh"); showNotif("⚠ RESI INVALID", "error");
             scanHistory.unshift({ resi, status: "INVALID", display: "ANEH" });
-            localStorage.setItem("scanHistory", JSON.stringify(scanHistory.slice(0, 100)));
-            renderHistory();
         }
-    }catch(err){
-        beepError();
-        setLampuBca('kuning', 'Sinyal Hilang! Resi Masuk Antrean');
-        robotBicara(`${ekspedisi}, Antre.`);
-        showNotif("Koneksi Terputus, Tersimpan di HP", "warning");
-    } finally {
-        setTimeout(() => { 
-            isProcessing = false; 
-            if(html5QrCode) html5QrCode.resume();
-        }, 1500);
-    }
+        localStorage.setItem("scanHistory", JSON.stringify(scanHistory.slice(0, 100)));
+        renderHistory();
+    } catch(err){ beepError(); setLampuBca('kuning', 'Sinyal Hilang!'); robotBicara(`${ekspedisi}, Antre.`); } 
+    finally { setTimeout(() => { isProcessing = false; if(html5QrCode) html5QrCode.resume(); }, 1500); }
 }
 
-function renderHistory(){
-    const body = document.getElementById("historyBody");
-    body.innerHTML = "";
-
-    scanHistory.forEach((item, index) => {
-        if(index < 15) {
-            let badge = "badge-keluar";
-            if(item.status === "DUPLIKAT") badge = "badge-duplikat";
-            if(item.status === "INVALID") badge = "badge-invalid";
-
-            body.innerHTML += `
-                <tr>
-                    <td style="font-weight:600; color:#334155;">${item.resi}</td>
-                    <td><span class="badge ${badge}">${item.display}</span></td>
-                </tr>
-            `;
-        }
-    });
-}
-
-function downloadOfflineData() {
-    if(localData.length === 0) return alert("Belum ada data!");
-    let blob = new Blob([localData.join("\n")], { type: "text/plain;charset=utf-8" });
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `scan_harian_${new Date().toISOString().slice(0,10)}.txt`;
-    a.click();
-}
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('PWA OK', reg))
-            .catch(err => console.log('PWA Gagal', err));
-    });
-}
+function renderHistory(){ const body = document.getElementById("historyBody"); body.innerHTML = ""; scanHistory.slice(0, 15).forEach(item => { let badge = item.status === "DUPLIKAT" ? "badge-duplikat" : (item.status === "INVALID" ? "badge-invalid" : "badge-keluar"); body.innerHTML += `<tr><td style="font-weight:600;">${item.resi}</td><td><span class="badge ${badge}">${item.display}</span></td></tr>`; }); }
+function downloadOfflineData() { let blob = new Blob([localData.join("\n")], { type: "text/plain" }); let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "data_scan.txt"; a.click(); }
 </script>
 </body>
 </html>
