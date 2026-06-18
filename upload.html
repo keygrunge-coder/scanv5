@@ -1,9 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>UPLOAD DATA RETUR</title>
-    <style>
+
       <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -41,30 +36,3 @@
 </html>
     </style>
 </head>
-<body>
-    <div class="card">
-        <h3>Pilih File CSV</h3>
-        <input type="file" id="csvFile" accept=".csv" style="padding: 10px;">
-        <button id="uploadBtn" class="btn btn-primary" onclick="prosesUpload()">Proses & Upload</button>
-    </div>
-
-    <script>
-    function prosesUpload() {
-        // Logika upload ke Apps Script
-        const file = document.getElementById('csvFile').files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const rows = e.target.result.split('\n').map(r => [r.trim()]);
-            // Panggil URL Apps Script lu
-            fetch("URL_APPS_SCRIPT_LU", {
-                method: "POST",
-                body: JSON.stringify({ action: "uploadCSV", rows: rows })
-            }).then(r => r.json()).then(res => {
-                alert("Berhasil!");
-            });
-        };
-        reader.readAsText(file);
-    }
-    </script>
-</body>
-</html>
