@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h3>Upload CSV Retur</h3>
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="prosesUpload()">Upload ke RETUR_GLOBAL</button>
+
+    <script>
+    function prosesUpload() {
+        const file = document.getElementById('csvFile').files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const rows = e.target.result.split('\n').map(r => r.split(','));
+            fetch("https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec", {
+                method: "POST",
+                body: JSON.stringify({ action: "uploadCSV", rows: rows })
+            }).then(r => r.json()).then(res => alert("Upload Berhasil!"));
+        };
+        reader.readAsText(file);
+    }
+    </script>
+</body>
+</html>
