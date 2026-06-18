@@ -87,7 +87,6 @@ button:hover{
 
 const APP_URL =
 "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
-
 async function prosesUpload(){
 
     const file = document.getElementById("csvFile").files[0];
@@ -111,7 +110,7 @@ async function prosesUpload(){
             const rows = text
                 .split(/\r?\n/)
                 .filter(row => row.trim() !== "")
-                .map(row => row.split("\t"));
+                .map(row => row.split(","));
 
             document.getElementById("status").innerHTML =
             "Mengupload...";
