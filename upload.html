@@ -1,41 +1,165 @@
-async function prosesUpload(){
-    const file = document.getElementById("csvFile").files[0];
-    if(!file){ alert("Pilih file CSV terlebih dahulu"); return; }
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload CSV Retur TikTok</title>
 
-    document.getElementById("status").innerHTML = "Membaca file...";
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:#f5f5f5;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    background:white;
+    width:100%;
+    max-width:500px;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+}
+
+h2{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+input[type=file]{
+    width:100%;
+    padding:10px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#0d6efd;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:0.9;
+}
+
+#status{
+    margin-top:15px;
+    text-align:center;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Upload CSV Retur TikTok</h2>
+
+    <input type="file" id="csvFile" accept=".csv">
+
+    <button onclick="prosesUpload()">
+        Upload CSV
+    </button>
+
+    <div id="status"></div>
+
+</div>
+
+<script>
+
+const APP_URL =
+"https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
+
+async function prosesUpload(){
+
+    const file = document.getElementById("csvFile").files[0];
+
+    if(!file){
+        alert("Pilih file CSV terlebih dahulu");
+        return;
+    }
+
+    document.getElementById("status").innerHTML =
+    "Membaca file...";
+
     const reader = new FileReader();
 
     reader.onload = async function(e){
+
         try{
+
             const text = e.target.result;
-            // Memecah CSV dengan aman (handle koma di dalam tanda kutip)
-            const rows = text.split(/\r?\n/)
-                             .filter(row => row.trim() !== "")
-                             .map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/));
 
-            document.getElementById("status").innerHTML = "Mengupload...";
+            const rows = text
+                .split(/\r?\n/)
+                .filter(row => row.trim() !== "")
+                .map(row => row.split("\t"));
 
-            const response = await fetch(APP_URL, {
-                method: "POST",
-                redirect: "follow", // PENTING: Untuk menangani redirect Apps Script
-                body: JSON.stringify({
-                    action: "uploadCSV",
-                    rows: rows
+            document.getElementById("status").innerHTML =
+            "Mengupload...";
+
+            const response = await fetch(APP_URL,{
+                method:"POST",
+                body:JSON.stringify({
+                    action:"uploadCSV",
+                    rows:rows
                 })
             });
 
             const result = await response.json();
+
             if(result.status === "success"){
-                document.getElementById("status").innerHTML = "✅ Upload berhasil";
+
+                document.getElementById("status").innerHTML =
+                "✅ Upload berhasil";
+
                 alert("Data berhasil masuk ke RETUR_GLOBAL");
-            } else {
-                throw new Error("Gagal di server");
+
+            }else{
+
+                document.getElementById("status").innerHTML =
+                "❌ Upload gagal";
+
+                alert("Upload gagal");
+
             }
-        } catch(err){
-            console.error(err);
-            document.getElementById("status").innerHTML = "❌ Terjadi kesalahan";
-            alert("Error: " + err.message);
+
+        }catch(err){
+
+            console.log(err);
+
+            document.getElementById("status").innerHTML =
+            "❌ Terjadi kesalahan";
+
+            alert("Terjadi kesalahan saat upload");
+
         }
+
     };
+
     reader.readAsText(file);
+
 }
+
+</script>
+
+</body>
+</html>
