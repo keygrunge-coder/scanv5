@@ -4,7 +4,41 @@
     <meta charset="UTF-8">
     <title>UPLOAD DATA RETUR</title>
     <style>
-      <link rel="stylesheet" href="style.css">  /* (Isi sama persis dengan index.html) */
+      <!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>UPLOAD CSV</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f8fafc; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button { background: #003399; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h3>Upload File CSV</h3>
+        <input type="file" id="csvFile" accept=".csv">
+        <button onclick="prosesUpload()">Upload Sekarang</button>
+    </div>
+
+    <script>
+    function prosesUpload() {
+        const file = document.getElementById('csvFile').files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const rows = e.target.result.split('\n').map(r => [r.trim()]).filter(r => r[0] !== "");
+            // GANTI URL DI BAWAH DENGAN URL WEB APP LU
+            fetch("https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec", {
+                method: "POST",
+                body: JSON.stringify({ action: "uploadCSV", rows: rows })
+            }).then(() => alert("Data berhasil masuk ke RETUR_GLOBAL!"));
+        };
+        reader.readAsText(file);
+    }
+    </script>
+</body>
+</html>
     </style>
 </head>
 <body>
