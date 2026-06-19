@@ -3,7 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>masukan hasil copas</title>
+    <title>Scanner SEKAROFFICIAL</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(() => console.log('PWA Service Worker Terdaftar!'));
+      }
+    </script>
+
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f9; }
         .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -16,8 +25,8 @@
 <body>
 
 <div class="container">
-    <h2>Paste Teks Pesanan Tokopedia</h2>
-    <textarea id="rawText" placeholder="Paste teks dari Tokopedia di sini..."></textarea>
+    <h2>Paste Teks Pesanan Tokopedia/TikTok</h2>
+    <textarea id="rawText" placeholder="Paste teks di sini..."></textarea>
     <button onclick="prosesTeks()">Proses & Upload ke Sheet</button>
     <div id="status"></div>
 </div>
@@ -27,30 +36,18 @@
 
     function prosesTeks() {
         const text = document.getElementById("rawText").value;
-        const lines = text.split('\n');
+        const blocks = text.split("ID Pesanan:");
         let dataUpload = [];
 
-        for (let i = 0; i < lines.length; i++) {
-            let line = lines[i].trim();
+        for (let i = 1; i < blocks.length; i++) {
+            let block = blocks[i];
+            let orderMatch = block.match(/\d{18}/);
+            let orderId = orderMatch ? orderMatch[0] : null;
+            let resiMatch = block.match(/(JX|JT|JZ)\d+/);
+            let resi = resiMatch ? resiMatch[0] : null;
 
-            // Mendeteksi ID Pesanan baik yang ada tulisannya atau angka saja
-            if (line.includes("ID Pesanan:") || /^\d{18}$/.test(line)) {
-                let orderId = line.replace("ID Pesanan:", "").trim();
-                let resi = "";
-
-                // Cari resi di 10 baris ke bawah
-                for (let j = 1; j <= 10; j++) {
-                    if (lines[i+j] && (lines[i+j].includes("J&T Express, ") || lines[i+j].includes("JX") || lines[i+j].includes("JT"))) {
-                        // Ambil setelah koma atau cari pola resi
-                        let parts = lines[i+j].split(",");
-                        resi = parts[parts.length - 1].trim(); 
-                        break;
-                    }
-                }
-
-                if (orderId && resi) {
-                    dataUpload.push([orderId, resi]);
-                }
+            if (orderId && resi) {
+                dataUpload.push([orderId, resi]);
             }
         }
 
