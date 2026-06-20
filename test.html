@@ -1,3 +1,24 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Scanner SEKAROFFICIAL</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 250px; margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        #status { margin-top: 10px; text-align: center; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Input Data Retur</h2>
+    <textarea id="rawText" placeholder="Paste data pesanan di sini..."></textarea>
+    <button onclick="prosesTeks()">Upload ke Sheets</button>
+    <div id="status"></div>
+</div>
+
 <script>
     const APP_URL = "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
 
@@ -9,45 +30,51 @@
         for (let i = 1; i < blocks.length; i++) {
             let block = blocks[i];
             
-            // 1. Ekstrak Order ID
+            // Ekstraksi data menggunakan Regex
             let orderMatch = block.match(/\d{15,20}/);
-            // 2. Ekstrak Resi
             let resiMatch = block.match(/(JX|JT|JZ|SPX)\d+/i);
-            // 3. Ekstrak SKU (setelah "SKU Penjual:")
             let skuMatch = block.match(/SKU Penjual:\s*([^\n\r]+)/i);
-            // 4. Ekstrak QTY (setelah "×")
             let qtyMatch = block.match(/×\s*(\d+)/);
-            // 5. Ekstrak Status (Dibatalkan/Sedang transit)
             let statusMatch = block.match(/(Dibatalkan|Sedang transit|Pengantaran gagal)/i);
-            // 6. Ekstrak Tgl (Format dd/mm/yyyy hh:mm:ss)
             let tglMatch = block.match(/(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2})/);
 
             if (orderMatch && resiMatch) {
                 dataUpload.push([
-                    orderMatch[0],
-                    resiMatch[0],
-                    skuMatch ? skuMatch[1].trim() : "-",
-                    qtyMatch ? qtyMatch[1] : "1",
-                    statusMatch ? statusMatch[0] : "Normal",
-                    tglMatch ? tglMatch[1] : "-"
+                    orderMatch[0],                  // OrderID
+                    resiMatch[0],                   // Resi
+                    skuMatch ? skuMatch[1].trim() : "-", 
+                    qtyMatch ? qtyMatch[1] : "1",   
+                    statusMatch ? statusMatch[0] : "Normal", 
+                    tglMatch ? tglMatch[1] : "-"    
                 ]);
             }
         }
 
         if (dataUpload.length > 0) {
             document.getElementById("status").innerText = "Mengirim...";
+            
             fetch(APP_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "uploadManual", data: dataUpload })
-            }).then(r => r.json()).then(() => {
-                document.getElementById("status").innerText = "✅ Sukses terkirim!";
-                document.getElementById("rawText").value = "";
-            }).catch(() => {
-                document.getElementById("status").innerText = "⚠️ Terkirim (cek sheet).";
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === "success") {
+                    document.getElementById("status").innerText = "✅ Sukses terkirim!";
+                    document.getElementById("rawText").value = "";
+                } else {
+                    document.getElementById("status").innerText = "⚠️ Error: " + data.message;
+                }
+            })
+            .catch(e => {
+                document.getElementById("status").innerText = "⚠️ Gagal koneksi ke server.";
+                console.error(e);
             });
         } else {
-            alert("Data tidak ditemukan.");
+            alert("Data tidak ditemukan. Pastikan format teks mengandung ID Pesanan dan Resi.");
         }
     }
 </script>
+</body>
+</html>
