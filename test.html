@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner SEKAROFFICIAL</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f4f4f9; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #333; text-align: center; }
+        textarea { width: 100%; height: 350px; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; resize: vertical; }
+        button { width: 100%; padding: 15px; background: #0d6efd; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.3s; }
+        button:hover { background: #0b5ed7; }
+        #status { margin-top: 15px; text-align: center; font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Scanner Data Retur</h2>
+    <textarea id="rawText" placeholder="Paste teks pesanan di sini..."></textarea>
+    <button onclick="prosesTeks()">Proses & Upload Data</button>
+    <div id="status"></div>
+</div>
+
+<script>
+    const APP_URL = "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
+
+    function prosesTeks() {
+        const text = document.getElementById("rawText").value;
+        // Memecah teks menjadi potongan per pesanan berdasarkan kata "ID Pesanan:"
+        const blocks = text.split(/ID Pesanan:/i);
+        let dataUpload = [];
+
+        for (let i = 1; i < blocks.length; i++) {
+            let block = blocks[i];
+            
+            // Mencari ID Pesanan (angka 15-20 digit)
+            let orderMatch = block.match(/\d{15,20}/);
+            let orderId = orderMatch ? orderMatch[0] : null;
+            
+            // Mencari Resi (JX/JT/JZ diikuti angka)
+            let resiMatch = block.match(/(JX|JT|JZ|SPX)\d+/i);
+            let resi = resiMatch ? resiMatch[0] : null;
+
+            if (orderId && resi) {
+                dataUpload.push([orderId, resi]);
+            }
+        }
+
+        if (dataUpload.length > 0) {
+            uploadKeSheet(dataUpload);
+        } else {
+            alert("Data tidak ditemukan! Pastikan teks yang di-paste mengandung 'ID Pesanan' dan Resi (JX/JT/JZ).");
+        }
+    }
+
+    async function uploadKeSheet(data) {
+        const statusDiv = document.getElementById("status");
+        statusDiv.innerText = "Mengupload " + data.length + " data, mohon tunggu...";
+        
+        try {
+            // Mengirim data ke Google Apps Script
+            const response = await fetch(APP_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "uploadManual", data: data })
+            });
+
+            const result = await response.json();
+            
+            if (result.status === "success") {
+                statusDiv.innerText = "✅ Berhasil! " + data.length + " data telah masuk.";
+                document.getElementById("rawText").value = "";
+                alert("Berhasil memproses " + data.length + " pesanan!");
+            } else {
+                throw new Error("Server mengembalikan status error");
+            }
+        } catch (err) {
+            console.error(err);
+            statusDiv.innerText = "❌ Gagal upload data.";
+            alert("Terjadi kesalahan: " + err.message + ". Pastikan Deploy 'Anyone'.");
+        }
+    }
+</script>
+</body>
+</html>tes
