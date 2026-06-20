@@ -38,20 +38,21 @@
 
         if (dataUpload.length > 0) {
             document.getElementById("status").innerText = "Mengirim...";
-            // Menggunakan fetch dengan mode 'no-cors' agar melewati batasan otorisasi
+            
+            // Menggunakan fetch dengan mode no-cors
+            // Kita kirim sebagai string teks biasa agar tidak memicu Preflight CORS
             fetch(APP_URL, {
                 method: "POST",
                 mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "uploadManual", data: dataUpload })
             }).then(() => {
-                document.getElementById("status").innerText = "✅ Sukses terkirim!";
+                document.getElementById("status").innerText = "✅ Selesai!";
                 document.getElementById("rawText").value = "";
             }).catch(e => {
-                document.getElementById("status").innerText = "⚠️ Terkirim (cek sheet).";
+                document.getElementById("status").innerText = "⚠️ Cek Sheet (Terkirim).";
             });
         } else {
-            alert("Data tidak ditemukan. Pastikan format teks sesuai.");
+            alert("Data tidak ditemukan.");
         }
     }
 </script>
