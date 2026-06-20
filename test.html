@@ -19,62 +19,95 @@
     <div id="status"></div>
 </div>
 
-<script>
-    const APP_URL = "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
+function prosesTeks() {
+    const text = document.getElementById("rawText").value;
 
-    function prosesTeks() {
-        const text = document.getElementById("rawText").value;
-        const blocks = text.split(/ID Pesanan:/i);
-        let dataUpload = [];
+    const blocks = text.split(/ID Pesanan:/i);
+    let dataUpload = [];
 
-        for (let i = 1; i < blocks.length; i++) {
-            let block = blocks[i];
-            
-            // Ekstraksi data menggunakan Regex
-            let orderMatch = block.match(/\d{15,20}/);
-            let resiMatch = block.match(/(JX|JT|JZ|SPX)\d+/i);
-            let skuMatch = block.match(/SKU Penjual:\s*([^\n\r]+)/i);
-            let qtyMatch = block.match(/×\s*(\d+)/);
-            let statusMatch = block.match(/(Dibatalkan|Sedang transit|Pengantaran gagal)/i);
-            let tglMatch = block.match(/(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2})/);
+    for (let i = 1; i < blocks.length; i++) {
+        const block = blocks[i];
 
-            if (orderMatch && resiMatch) {
-                dataUpload.push([
-                    orderMatch[0],                  // OrderID
-                    resiMatch[0],                   // Resi
-                    skuMatch ? skuMatch[1].trim() : "-", 
-                    qtyMatch ? qtyMatch[1] : "1",   
-                    statusMatch ? statusMatch[0] : "Normal", 
-                    tglMatch ? tglMatch[1] : "-"    
-                ]);
-            }
+        // Order ID
+        const orderMatch = block.match(/\d{15,20}/);
+
+        // Resi
+        const resiMatch = block.match(/(JX\d+|JT\d+|JZ\d+|SPX[A-Z0-9]*)/i);
+
+        // SKU
+        let sku = "-";
+        const skuPos = block.indexOf("SKU Penjual:");
+        if (skuPos !== -1) {
+            const afterSku = block.substring(skuPos + 12);
+            const skuLine = afterSku.split(/\r?\n/)[0].trim();
+            if (skuLine) sku = skuLine;
         }
 
-        if (dataUpload.length > 0) {
-            document.getElementById("status").innerText = "Mengirim...";
-            
-            fetch(APP_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "uploadManual", data: dataUpload })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if(data.status === "success") {
-                    document.getElementById("status").innerText = "✅ Sukses terkirim!";
-                    document.getElementById("rawText").value = "";
-                } else {
-                    document.getElementById("status").innerText = "⚠️ Error: " + data.message;
-                }
-            })
-            .catch(e => {
-                document.getElementById("status").innerText = "⚠️ Gagal koneksi ke server.";
-                console.error(e);
-            });
-        } else {
-            alert("Data tidak ditemukan. Pastikan format teks mengandung ID Pesanan dan Resi.");
+        // Qty
+        let qty = "1";
+        const qtyMatch = block.match(/×\s*(\d+)/);
+        if (qtyMatch) qty = qtyMatch[1];
+
+        // Status Marketplace
+        let status = "-";
+        const statusMatch = block.match(
+            /(Sedang transit|Dibatalkan|Pengantaran gagal|Dalam pengiriman|Telah diterima)/i
+        );
+        if (statusMatch) status = statusMatch[1];
+
+        // Tanggal
+        const tglMatch = block.match(
+            /(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/
+        );
+
+        if (orderMatch && resiMatch) {
+            dataUpload.push([
+                orderMatch[0],                       // Order ID
+                resiMatch[0],                        // Resi
+                sku,                                // SKU
+                qty,                                // Qty
+                status,                             // Status MP
+                tglMatch ? tglMatch[1] : "-"        // Tgl Gagal
+            ]);
         }
     }
-</script>
-</body>
+
+    console.log(dataUpload);
+
+    if (dataUpload.length === 0) {
+        alert("Tidak ada data yang berhasil diproses.");
+        return;
+    }
+
+    document.getElementById("status").innerText =
+        `Mengirim ${dataUpload.length} data...`;
+
+    fetch(APP_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            action: "uploadManual",
+            data: dataUpload
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === "success") {
+            document.getElementById("status").innerText =
+                `✅ Berhasil upload ${dataUpload.length} pesanan`;
+
+            document.getElementById("rawText").value = "";
+        } else {
+            document.getElementById("status").innerText =
+                "⚠️ " + (data.message || "Gagal upload");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById("status").innerText =
+            "⚠️ Gagal koneksi ke Apps Script";
+    });
+}
 </html>
