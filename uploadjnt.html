@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Retur</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f4f4;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+}
+
+textarea{
+    width:100%;
+    height:350px;
+    padding:10px;
+    box-sizing:border-box;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    margin-top:10px;
+    background:#0d6efd;
+    color:white;
+    border:none;
+    border-radius:6px;
+    font-size:16px;
+}
+
+#hasil{
+    margin-top:20px;
+    white-space:pre-wrap;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h2>UPLOAD RETUR GLOBAL</h2>
+
+<textarea id="rawData"
+placeholder="Paste data TikTok / Shopee di sini"></textarea>
+
+<button onclick="uploadRetur()">
+Upload ke Sheet
+</button>
+
+<div id="hasil"></div>
+
+</div>
+
+<script>
+
+const APP_URL = "https://script.google.com/macros/s/AKfycbwa0TkNJEaxsQ41EsiCjvI-gJ1-zL7BZEbdkYIMMOkFZ58PooFUEzX5mp0MLVZtKOxn9g/exec";
+
+async function uploadRetur(){
+
+    const text = document.getElementById("rawData").value.trim();
+
+    if(!text){
+        alert("Paste data dulu");
+        return;
+    }
+
+    document.getElementById("hasil").innerHTML =
+        "Sedang memproses...";
+
+    try{
+
+        const r = await fetch(APP_URL,{
+            method:"POST",
+            body:JSON.stringify({
+                source:"uploadRetur",
+                text:text
+            })
+        });
+
+        const json = await r.json();
+
+        document.getElementById("hasil").innerHTML =
+            JSON.stringify(json,null,2);
+
+    }catch(err){
+
+        document.getElementById("hasil").innerHTML =
+            err.toString();
+
+    }
+}
+
+</script>
+
+</body>
+</html>
