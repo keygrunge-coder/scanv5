@@ -123,34 +123,85 @@ function startCamera() {
 }
 document.getElementById("startBtn").onclick = startCamera;
 
-async function saveResi(resi){
-    let resiUpper = resi.toUpperCase();
-    let ekspedisi = resiUpper.startsWith("SPX") ? "S P X" : "J and T";
+async function saveResi(resi) {
+    // 1. Bersihkan resi: hilangkan spasi, jadikan huruf kapital agar seragam
+    let resiBersih = resi.trim().toUpperCase();
+    
+    // 2. Definisi pola kurir yang valid (Ditambahkan JY dan JT)
+    const isSPX = resiBersih.startsWith("SPX"); 
+    const isJNT = resiBersih.startsWith("JX") || 
+                  resiBersih.startsWith("JZ") || 
+                  resiBersih.startsWith("JY") || 
+                  resiBersih.startsWith("JT");
 
-    if (!localData.includes(resi)) { localData.push(resi); localStorage.setItem('harian_offline_cache', JSON.stringify(localData)); document.getElementById('local-slot').innerText = localData.length; }
+    // 3. Validasi awal: Jika bukan format SPX atau JNT, langsung tolak
+    if (!isSPX && !isJNT) {
+        beepError();
+        setLampuBca('merah', 'Format Resi Salah!');
+        robotBicara("Format resi tidak dikenali");
+        showNotif("⚠ FORMAT SALAH", "error");
+        
+        // Simpan ke history sebagai invalid/aneh
+        scanHistory.unshift({ resi: resiBersih, status: "INVALID", display: "ANEH" });
+        renderHistory();
+        
+        // Reset scanner agar bisa scan lagi setelah 1.5 detik
+        setTimeout(() => { isProcessing = false; if(html5QrCode) html5QrCode.resume(); }, 1500);
+        return;
+    }
+
+    let ekspedisi = isSPX ? "S P X" : "J and T";
     setLampuBca('kuning', 'Mengirim Data...');
 
-    try{
-        const r = await fetch(APP_URL, { method: "POST", mode: "cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ resi: resi, source: "harian" }) });
+    try {
+        // Mengirim ke Apps Script
+        const r = await fetch(APP_URL, { 
+            method: "POST", 
+            mode: "cors", 
+            headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+            body: JSON.stringify({ resi: resiBersih, source: "harian" }) 
+        });
         const json = await r.json();
 
         if(json.status === "success"){
-            beepSuccess(); setLampuBca('ijo', `Sukses! ${json.ekspedisi}`); robotBicara(`${ekspedisi}, Sukses.`); showNotif("✓ BERHASIL", "success");
-            scanHistory.unshift({ resi, status: "SUKSES", display: json.ekspedisi });
+            beepSuccess(); 
+            setLampuBca('ijo', `Sukses! ${json.ekspedisi}`); 
+            robotBicara(`${ekspedisi}, Sukses.`); 
+            showNotif("✓ BERHASIL", "success");
+            scanHistory.unshift({ resi: resiBersih, status: "SUKSES", display: json.ekspedisi });
         } else if(json.status === "duplicate"){
-            beepDuplicate(); setLampuBca('merah', 'Resi Dobel!');
-            // --- INI BAGIAN YANG DIPERBAIKI BIAR OTOMATIS SESUAI KURIR ---
-            robotBicara(`${ekspedisi}, Dobel, Bro!`); 
+            beepDuplicate(); 
+            setLampuBca('merah', 'Resi Dobel!');
+            robotBicara(`Dobel, Bro!`); 
             showNotif("⚠ RESI DOBEL", "warning");
-            scanHistory.unshift({ resi, status: "DUPLIKAT", display: "DOBEL" });
+            scanHistory.unshift({ resi: resiBersih, status: "DUPLIKAT", display: "DOBEL" });
         } else {
-            beepError(); setLampuBca('merah', 'Resi Aneh!'); robotBicara("Resi Aneh"); showNotif("⚠ RESI INVALID", "error");
-            scanHistory.unshift({ resi, status: "INVALID", display: "ANEH" });
+            beepError(); 
+            setLampuBca('merah', 'Data Ditolak Server'); 
+            robotBicara("Data ditolak server"); 
+            showNotif("⚠ DATA DITOLAK", "error");
+            scanHistory.unshift({ resi: resiBersih, status: "INVALID", display: "GAGAL" });
+        }
+        
+        // Update Local Storage
+        if (!localData.includes(resiBersih)) { 
+            localData.push(resiBersih); 
+            localStorage.setItem('harian_offline_cache', JSON.stringify(localData)); 
+            document.getElementById('local-slot').innerText = localData.length; 
         }
         localStorage.setItem("scanHistory", JSON.stringify(scanHistory.slice(0, 100)));
         renderHistory();
-    } catch(err){ beepError(); setLampuBca('kuning', 'Sinyal Hilang!'); robotBicara(`${ekspedisi}, Antre.`); } 
-    finally { setTimeout(() => { isProcessing = false; if(html5QrCode) html5QrCode.resume(); }, 1500); }
+        
+    } catch(err){ 
+        beepError(); 
+        setLampuBca('kuning', 'Sinyal Hilang!'); 
+        robotBicara(`Antre.`); 
+    } finally { 
+        setTimeout(() => { 
+            isProcessing = false; 
+            if(html5QrCode) html5QrCode.resume(); 
+        }, 1500); 
+    }
 }
 
 function renderHistory(){ const body = document.getElementById("historyBody"); body.innerHTML = ""; scanHistory.slice(0, 15).forEach(item => { let badge = item.status === "DUPLIKAT" ? "badge-duplikat" : (item.status === "INVALID" ? "badge-invalid" : "badge-keluar"); body.innerHTML += `<tr><td style="font-weight:600;">${item.resi}</td><td><span class="badge ${badge}">${item.display}</span></td></tr>`; }); }
