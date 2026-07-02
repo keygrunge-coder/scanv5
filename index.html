@@ -302,7 +302,7 @@ async function saveResi(resi){
 
     } catch(err){ beepError(); setLampuBca('kuning', 'Sinyal Hilang!'); robotBicara(`${ekspedisi}, Antre.`); } 
 
-    finally { setTimeout(() => { isProcessing = false; if(html5QrCode) html5QrCode.resume(); }, 1500); }
+    finally { setTimeout(() => { isProcessing = false; if(html5QrCode) html5QrCode.resume(); }, 1000); }
 
 }
 
