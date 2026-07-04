@@ -206,7 +206,7 @@ renderHistory();
 
 function beep(freq, duration){ try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); osc.frequency.value = freq; osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + duration); } catch(e){} }
 
-function beepSuccess(){ beep(1000, 0.08); }
+function beepSuccess(){ beep(500, 0.08); }
 
 function beepDuplicate(){ beep(350, 0.4); } 
 
@@ -302,7 +302,7 @@ async function saveResi(resi){
 
     } catch(err){ beepError(); setLampuBca('kuning', 'Sinyal Hilang!'); robotBicara(`${ekspedisi}, Antre.`); } 
 
-    finally { setTimeout(() => { isProcessing = false; if(html5QrCode) html5QrCode.resume(); }, 1000); }
+    finally { setTimeout(() => { isProcessing = false; if(html5QrCode) html5QrCode.resume(); }, 500); }
 
 }
 
