@@ -96,7 +96,7 @@
 
     <div class="header-box">
 
-        <h3 style="margin: 0; font-size: 16px;">📦 SCANNER PAKET KELUAR NJ</h3>
+        <h3 style="margin: 0; font-size: 16px;">📦 SCANNER PAKET KELUAR V5</h3>
 
         <a href="retur.html" class="btn-nav">🔄 Pindah ke Scan RETUR</a>
 
@@ -106,7 +106,15 @@
 
 
 
- 
+    <div class="dash-container">
+
+        <div class="dash-card"><h4>Hari Ini</h4><p id="load-hari-ini">0</p></div>
+
+        <div class="dash-card"><h4>Hari Lalu</h4><p id="load-kemarin">0</p></div>
+
+        <div class="dash-card"><h4>Minggu Ini</h4><p id="load-minggu">0</p></div>
+
+    </div>
 
 
 
@@ -130,11 +138,25 @@
 
 
 
+    <div class="card">
+
+        <h3>Input Manual Resi</h3>
+
+        <input type="text" id="manualResi" placeholder="Masukkan nomor resi...">
+
+        <button id="manualBtn" class="btn btn-primary">Simpan Resi</button>
+
+    </div>
 
 
 
+    <div class="card" style="padding: 10px;">
 
-    
+        <button class="btn-offline" onclick="downloadOfflineData()">📥 Download Data Offline</button>
+
+        <div style="font-size: 12px; color: #64748b; margin-top: 5px; font-weight: 600;">Data Antrean HP: <span id="local-slot">0</span> resi</div>
+
+    </div>
 
 
 
@@ -260,7 +282,7 @@ async function saveResi(resi){
 
             // --- INI BAGIAN YANG DIPERBAIKI BIAR OTOMATIS SESUAI KURIR ---
 
-            robotBicara(`${ekspedisi}, dobel scan BRO!`); 
+            robotBicara(`${ekspedisi}, dobel kasep tos di scan!`); 
 
             showNotif("⚠ RESI DOBEL", "warning");
 
